@@ -16,10 +16,19 @@ WHERE created_at >= '2023-05-01'
   AND created_at <  '2023-06-01';
 
 BEFORE:
-<paste here>
+Not available (baseline EXPLAINs were not captured before applying migrations).
 
 AFTER:
-<paste here>
+                                                                        QUERY PLAN                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using idx_shipments_created_at_btree on shipments  (cost=0.42..8.44 rows=1 width=147) (actual time=0.038..0.039 rows=0 loops=1)
+   Index Cond: ((created_at >= '2023-05-01 00:00:00'::timestamp without time zone) AND (created_at < '2023-06-01 00:00:00'::timestamp without time zone))
+   Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=235
+ Planning Time: 7.842 ms
+ Execution Time: 0.450 ms
+(7 rows)
 
 What we expect AFTER:
 - Index Scan / Bitmap Index Scan using idx_shipments_created_at_btree (or similar)
@@ -39,10 +48,32 @@ ORDER BY s.created_at DESC
 LIMIT 20;
 
 BEFORE:
-<paste here>
+Not available (baseline EXPLAINs were not captured before applying migrations).
 
 AFTER:
-<paste here>
+                                                                                  QUERY PLAN                                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.85..679.06 rows=20 width=24) (actual time=0.296..21.981 rows=20 loops=1)
+   Buffers: shared hit=2450
+   ->  Nested Loop  (cost=0.85..171283.22 rows=5051 width=24) (actual time=0.293..21.962 rows=20 loops=1)
+         Buffers: shared hit=2450
+         ->  Index Scan Backward using idx_shipments_created_at_btree on shipments s  (cost=0.42..101898.68 rows=500000 width=24) (actual time=0.094..4.246 rows=491 loops=1)
+               Buffers: shared hit=498
+         ->  Memoize  (cost=0.43..0.47 rows=1 width=4) (actual time=0.035..0.035 rows=0 loops=491)
+               Cache Key: s.driver_id
+               Cache Mode: logical
+               Hits: 3  Misses: 488  Evictions: 0  Overflows: 0  Memory Usage: 34kB
+               Buffers: shared hit=1952
+               ->  Index Scan using drivers_pkey on drivers d  (cost=0.42..0.46 rows=1 width=4) (actual time=0.033..0.033 rows=0 loops=488)
+                     Index Cond: (id = s.driver_id)
+                     Filter: (name ~~* '%John%'::text)
+                     Rows Removed by Filter: 1
+                     Buffers: shared hit=1952
+ Planning:
+   Buffers: shared hit=420
+ Planning Time: 205.713 ms
+ Execution Time: 31.049 ms
+(20 rows)
 
 What we expect AFTER:
 - Fast filter on drivers via trigram index (idx_drivers_name_trgm)
@@ -62,10 +93,21 @@ ORDER BY amount_cents DESC
 LIMIT 20;
 
 BEFORE:
-<paste here>
+Not available (baseline EXPLAINs were not captured before applying migrations).
 
 AFTER:
-<paste here>
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.42..8.88 rows=20 width=8) (actual time=0.178..0.429 rows=20 loops=1)
+   Buffers: shared hit=25
+   ->  Index Scan Backward using idx_finance_invoices_amount_cents on finance_invoices  (cost=0.42..76238.15 rows=180287 width=8) (actual time=0.175..0.421 rows=20 loops=1)
+         Index Cond: ((amount_cents IS NOT NULL) AND (amount_cents > 50000))
+         Buffers: shared hit=25
+ Planning:
+   Buffers: shared hit=141
+ Planning Time: 3.601 ms
+ Execution Time: 0.688 ms
+(9 rows)
 
 What we expect AFTER:
 - Index Scan using idx_finance_invoices_amount_cents
@@ -83,10 +125,21 @@ ORDER BY timestamp DESC
 LIMIT 100;
 
 BEFORE:
-<paste here>
+Not available (baseline EXPLAINs were not captured before applying migrations).
 
 AFTER:
-<paste here>
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..8.45 rows=1 width=60) (actual time=0.220..0.221 rows=0 loops=1)
+   Buffers: shared hit=3
+   ->  Index Scan using idx_telemetry_truck_timestamp on truck_telemetry  (cost=0.43..8.45 rows=1 width=60) (actual time=0.218..0.219 rows=0 loops=1)
+         Index Cond: (truck_license_plate = 'TRK-9821'::text)
+         Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=161
+ Planning Time: 5.841 ms
+ Execution Time: 0.347 ms
+(9 rows)
 
 What we expect AFTER:
 - Index Scan using idx_telemetry_truck_timestamp
@@ -100,10 +153,20 @@ EXPLAIN (ANALYZE, BUFFERS)
 SELECT * FROM daily_stats_cache LIMIT 1;
 
 BEFORE:
-<paste here>
+Not available (baseline EXPLAINs were not captured before applying migrations).
 
 AFTER:
-<paste here>
+                                                    QUERY PLAN                                                    
+------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.00..1.01 rows=1 width=48) (actual time=0.049..0.051 rows=1 loops=1)
+   Buffers: shared hit=1
+   ->  Seq Scan on daily_stats_cache  (cost=0.00..1.01 rows=1 width=48) (actual time=0.044..0.045 rows=1 loops=1)
+         Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=59
+ Planning Time: 2.352 ms
+ Execution Time: 0.342 ms
+(8 rows)
 
 What we expect AFTER:
 - Very small, fast plan reading from daily_stats_cache

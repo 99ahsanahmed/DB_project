@@ -1,0 +1,8 @@
+.DS_Store
+*.stackdump
+
+# Accidental Windows/Bash redirection artifact
+NUL
+
+# Local DB volume (docker)
+postgres_data

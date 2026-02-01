@@ -21,12 +21,12 @@
 
 | Benchmark Case                                             |              Baseline Avg (ms) | Baseline Score | Final Avg (ms) | Final Score |
 | ---------------------------------------------------------- | -----------------------------: | -------------: | -------------: | ----------: |
-| 1. Unindexed Date Search (`/shipments/by-date`)            |                        _paste_ |        _paste_ |        _paste_ |     _paste_ |
-| 2. Driver Search (`/shipments/driver/{name}`)              |                        _paste_ |        _paste_ |        _paste_ |     _paste_ |
-| 3. JSON Parsing / Finance (`/finance/high-value-invoices`) |                        _paste_ |        _paste_ |        _paste_ |     _paste_ |
-| 4. Partitioning / Telemetry (`/telemetry/truck/{plate}`)   |                        _paste_ |        _paste_ |        _paste_ |     _paste_ |
-| 5. Complex Aggregation (`/analytics/daily-stats`)          |                        _paste_ |        _paste_ |        _paste_ |     _paste_ |
-| **FINAL SYSTEM GRADE**                                     | **40.76%** (observed baseline) |                |        _paste_ |     _paste_ |
+| 1. Unindexed Date Search (`/shipments/by-date`)            |                           8.44 |        100/100 |           9.20 |     100/100 |
+| 2. Driver Search (`/shipments/driver/{name}`)              |                        1071.65 |          0/100 |          46.45 |      85/100 |
+| 3. JSON Parsing / Finance (`/finance/high-value-invoices`) |                       14551.98 |          0/100 |           4.95 |     100/100 |
+| 4. Partitioning / Telemetry (`/telemetry/truck/{plate}`)   |                         482.97 |          3/100 |           5.00 |     100/100 |
+| 5. Complex Aggregation (`/analytics/daily-stats`)          |                           3.10 |        100/100 |           3.59 |     100/100 |
+| **FINAL SYSTEM GRADE**                                     | **40.76%** (observed baseline) |                |     **97.06%** |             |
 
 #### Evidence (what to include)
 
