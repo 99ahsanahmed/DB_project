@@ -1,0 +1,110 @@
+Legacy Logistics Rescue Mission — EXPLAIN Evidence
+
+How to capture:
+1) Open your DB client (DBeaver/TablePlus).
+2) Run each query twice (warm cache) and copy the SECOND output.
+3) Use: EXPLAIN (ANALYZE, BUFFERS)
+
+================================================================================
+1) Unindexed Date Search — /shipments/by-date?date=2023-05
+Target: < 10ms
+
+Query:
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM shipments
+WHERE created_at >= '2023-05-01'
+  AND created_at <  '2023-06-01';
+
+BEFORE:
+<paste here>
+
+AFTER:
+<paste here>
+
+What we expect AFTER:
+- Index Scan / Bitmap Index Scan using idx_shipments_created_at_btree (or similar)
+
+================================================================================
+2) Driver Search — /shipments/driver/John
+Target: < 20ms
+
+Benchmark-equivalent query (normalized design):
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+  s.id, s.created_at, s.status, s.driver_id
+FROM shipments s
+JOIN drivers d ON s.driver_id = d.id
+WHERE d.name ILIKE '%John%'
+ORDER BY s.created_at DESC
+LIMIT 20;
+
+BEFORE:
+<paste here>
+
+AFTER:
+<paste here>
+
+What we expect AFTER:
+- Fast filter on drivers via trigram index (idx_drivers_name_trgm)
+- Fast access on shipments via composite index (idx_shipments_driver_id_created_at)
+
+================================================================================
+3) JSON Parsing / Finance — /finance/high-value-invoices
+Target: < 200ms
+
+Query (post-optimization approach):
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, amount_cents
+FROM finance_invoices
+WHERE amount_cents IS NOT NULL
+  AND amount_cents > 50000
+ORDER BY amount_cents DESC
+LIMIT 20;
+
+BEFORE:
+<paste here>
+
+AFTER:
+<paste here>
+
+What we expect AFTER:
+- Index Scan using idx_finance_invoices_amount_cents
+
+================================================================================
+4) Partitioning / Telemetry — /telemetry/truck/TRK-9821?limit=100
+Target: < 50ms
+
+Query:
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT *
+FROM truck_telemetry
+WHERE truck_license_plate = 'TRK-9821'
+ORDER BY timestamp DESC
+LIMIT 100;
+
+BEFORE:
+<paste here>
+
+AFTER:
+<paste here>
+
+What we expect AFTER:
+- Index Scan using idx_telemetry_truck_timestamp
+
+================================================================================
+5) Complex Aggregation — /analytics/daily-stats
+Target: < 100ms
+
+Query (materialized view path):
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM daily_stats_cache LIMIT 1;
+
+BEFORE:
+<paste here>
+
+AFTER:
+<paste here>
+
+What we expect AFTER:
+- Very small, fast plan reading from daily_stats_cache
+
